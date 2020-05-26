@@ -1,8 +1,9 @@
 const leftMenu = document.querySelector('.left-menu');
 const hamburger = document.querySelector('.hamburger');
 const cardsPlace = document.querySelector('.tv-shows__list');
-let oldImg = null;
-let cardHandler = null;
+const tvShowList = document.querySelector('.tv-shows__list');
+const modal = document.querySelector('.modal');
+const modalCross = modal.querySelector('.cross');
 
 hamburger.onclick = () => {
   leftMenu.classList.toggle('openMenu');
@@ -26,31 +27,48 @@ leftMenu.onclick = evt => {
   }
 };
 
-/* ---------- через CSS это гораздо проще и эффективней сделать ;-) --------- */
-cardsPlace.onmouseover = evt => {
-  const card = evt.target.closest('.tv-card');
+/* --- будет работать только если навести непосредственно на саму картинку -- */
+// document.querySelectorAll('.tv-card__img').forEach((el, src) => {
+//   el.addEventListener('mouseenter', () => (src = el.src) && (el.src = el.getAttribute('data-backdrop')));
+//   el.addEventListener('mouseleave', () => el.src = src);
+// })
+
+/* ----------------------------- второй вариант ----------------------------- */
+
+const changeImage = evt => {
+  const card = evt.target.closest('.tv-shows__item');
 
   if (card) {
-    if (cardHandler !== card) {
-      const img = card.querySelector('.tv-card__img');
+    const img = card.querySelector('.tv-card__img');
 
-      oldImg = img.getAttribute('data-backdrop');
-      if (!oldImg) return;
-      img.setAttribute('data-backdrop', img.src);
-      img.src = oldImg;
-
-      cardHandler = card;
+    if (img.dataset.backdrop) {
+      [img.dataset.backdrop, img.src] = [img.src, img.dataset.backdrop];
     }
-  } else {
-    if (cardHandler) {
-      const img = cardHandler.querySelector('.tv-card__img');
+  }
+};
 
-      oldImg = img.getAttribute('data-backdrop');
-      if (!oldImg) return;
-      img.setAttribute('data-backdrop', img.src);
-      img.src = oldImg;
+cardsPlace.onmouseover = evt => changeImage(evt);
+cardsPlace.onmouseout = evt => changeImage(evt);
 
-      cardHandler = null;
-    }
+/* ------------------------ открытие модального окна ------------------------ */
+tvShowList.onclick = evt => {
+  evt.preventDefault();
+  
+  const target = evt.target;
+  const card = target.closest('.tv-card');
+
+  if (card) {
+    //убираем вертикальный скролл при выводе модального окна
+    document.body.style.overflow = 'hidden';
+    modal.style.background = 'rgba(0, 0, 0, 0.8)';
+    modal.classList.remove('hide');
+  }
+};
+
+modal.onclick = evt => {
+  // не красиво, но для примера можно
+  if (evt.target.closest('.cross') || evt.target.classList.contains('modal')) {
+    document.body.style.overflow = '';
+    modal.classList.add('hide');
   }
 };
