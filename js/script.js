@@ -1,10 +1,66 @@
+const IMG_URL = 'https://image.tmdb.org/t/p/w185_and_h278_bestv2';
+
 const leftMenu = document.querySelector('.left-menu');
 const hamburger = document.querySelector('.hamburger');
-const cardsPlace = document.querySelector('.tv-shows__list');
 const tvShowList = document.querySelector('.tv-shows__list');
 const modal = document.querySelector('.modal');
 const modalCross = modal.querySelector('.cross');
 
+const DBService = class {
+  getData = async url => {
+    const res = await fetch(url);
+    if (res.ok) {
+      return res.json();
+    }
+
+    throw new Error(`не удалось получить данные по адресу ${url}`);
+  };
+
+  getTestData = () => {
+    return this.getData('test.json');
+  };
+};
+
+/* --------------------------- генератор карточек --------------------------- */
+const renderCard = response => {
+  response.results.forEach(item => {
+    // prettier-ignore
+    const {
+      backdrop_path: backdrop,
+      name: title,
+      poster_path: poster,
+      vote_average: vote
+    } = item;
+
+    const posterIMG = poster ? IMG_URL + poster : './img/no-poster.jpg';
+    const backdropIMG = backdrop ? IMG_URL + backdrop : './img/no-poster.jpg';
+    const voteElem = '';
+
+    const card = document.createElement('li');
+
+    //card.classList.add('tv-show__item'); // добавит коасс к существующим
+    card.className = 'tv-shows__item'; // установит в коасс строку, затерев старые классы
+
+    card.innerHTML = `
+      <a href="#" class="tv-card">
+        <span class="tv-card__vote">${vote}</span>
+        <img
+          class="tv-card__img"
+          src="${posterIMG}"
+          data-backdrop="${backdropIMG}"
+          alt="${title}"
+        />
+        <h4 class="tv-card__head">${title}</h4>
+      </a>
+    `;
+
+    tvShowList.append(card);
+  });
+};
+
+new DBService().getTestData().then(renderCard);
+
+/* ------------------------------ открыть меню ------------------------------ */
 hamburger.onclick = () => {
   leftMenu.classList.toggle('openMenu');
   hamburger.classList.toggle('open');
@@ -33,7 +89,7 @@ leftMenu.onclick = evt => {
 //   el.addEventListener('mouseleave', () => el.src = src);
 // })
 
-/* ----------------------------- второй вариант ----------------------------- */
+/* ----------------------------- смена картинок карточек ----------------------------- */
 
 const changeImage = evt => {
   const card = evt.target.closest('.tv-shows__item');
@@ -47,13 +103,13 @@ const changeImage = evt => {
   }
 };
 
-cardsPlace.onmouseover = evt => changeImage(evt);
-cardsPlace.onmouseout = evt => changeImage(evt);
+tvShowList.onmouseover = evt => changeImage(evt);
+tvShowList.onmouseout = evt => changeImage(evt);
 
 /* ------------------------ открытие модального окна ------------------------ */
 tvShowList.onclick = evt => {
   evt.preventDefault();
-  
+
   const target = evt.target;
   const card = target.closest('.tv-card');
 
