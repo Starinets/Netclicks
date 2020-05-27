@@ -33,8 +33,8 @@ const renderCard = response => {
     } = item;
 
     const posterIMG = poster ? IMG_URL + poster : './img/no-poster.jpg';
-    const backdropIMG = backdrop ? IMG_URL + backdrop : './img/no-poster.jpg';
-    const voteElem = '';
+    const backdropIMG = backdrop ? IMG_URL + backdrop : '';
+    const voteElem = vote ? `<span class="tv-card__vote">${vote}</span>` : '';
 
     const card = document.createElement('li');
 
@@ -43,7 +43,7 @@ const renderCard = response => {
 
     card.innerHTML = `
       <a href="#" class="tv-card">
-        <span class="tv-card__vote">${vote}</span>
+        ${voteElem}
         <img
           class="tv-card__img"
           src="${posterIMG}"
@@ -89,7 +89,7 @@ leftMenu.onclick = evt => {
 //   el.addEventListener('mouseleave', () => el.src = src);
 // })
 
-/* ----------------------------- смена картинок карточек ----------------------------- */
+/* ------------------------- смена картинок карточек ------------------------ */
 
 const changeImage = evt => {
   const card = evt.target.closest('.tv-shows__item');
@@ -107,6 +107,7 @@ tvShowList.onmouseover = evt => changeImage(evt);
 tvShowList.onmouseout = evt => changeImage(evt);
 
 /* ------------------------ открытие модального окна ------------------------ */
+
 tvShowList.onclick = evt => {
   evt.preventDefault();
 
