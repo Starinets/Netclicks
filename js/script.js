@@ -5,6 +5,17 @@ const hamburger = document.querySelector('.hamburger');
 const tvShowList = document.querySelector('.tv-shows__list');
 const modal = document.querySelector('.modal');
 const modalCross = modal.querySelector('.cross');
+const tvShows = document.querySelector('.tv-shows');
+
+const tvCardIMG = document.querySelector('.tv-card__img');
+const modalTitle = document.querySelector('.modal__title');
+const genresList = document.querySelector('.genres-list');
+const rating = document.querySelector('.rating');
+const description = document.querySelector('.description');
+const modalLink = document.querySelector('.modal__link');
+
+const loading = document.createElement('div');
+loading.className = 'loading';
 
 const DBService = class {
   getData = async url => {
@@ -18,6 +29,10 @@ const DBService = class {
 
   getTestData = () => {
     return this.getData('test.json');
+  };
+
+  getTestCard = () => {
+    return this.getData('card.json');
   };
 };
 
@@ -54,11 +69,16 @@ const renderCard = response => {
       </a>
     `;
 
+    loading.remove(); // удаляем loading
     tvShowList.append(card);
   });
 };
 
-new DBService().getTestData().then(renderCard);
+{
+  // отображаем loading
+  tvShowList.append(loading);
+  new DBService().getTestData().then(renderCard);
+}
 
 /* ------------------------------ открыть меню ------------------------------ */
 hamburger.onclick = () => {
@@ -115,10 +135,41 @@ tvShowList.onclick = evt => {
   const card = target.closest('.tv-card');
 
   if (card) {
-    //убираем вертикальный скролл при выводе модального окна
-    document.body.style.overflow = 'hidden';
-    modal.style.background = 'rgba(0, 0, 0, 0.8)';
-    modal.classList.remove('hide');
+    // prettier-ignore
+    new DBService()
+      .getTestCard()
+      .then(response => {
+        tvCardIMG.src = IMG_URL + response.poster_path;
+        modalTitle.textContent = response.name;
+        //собираем в acc элементы списка
+        // в первой итерации в acc попадет первый элемент массива, поэтому третим параметром передаем ''
+        genresList.innerHTML = response.genres.reduce((acc, item) => `${acc}<li>${item.name}</li>`, ''); 
+        
+        //старый способ сборки списка
+        // genresList.textContent = ''; // работает быстрее чем .innerHTML = ''
+        // for (const item of response.genres) {
+        //   genresList.innerHTML += `<li>${item.name}</li>`;  
+        // }
+
+        // и еще один способ через forEach
+        // genresList.textContent = '';
+        // response.genres.forEach(item => {
+        //   genresList.innerHTML += `<li>${item.name}</li>`; 
+        // });
+
+        rating = 1;
+        description = 1;
+        modalLink = 1;
+      })
+      .then(() => {
+        // перенесли показ модалки в асинхронное выполнение, для того,
+        // чтобы модальное окно отображалосьб только после получения json от сервера
+
+        //убираем вертикальный скролл при выводе модального окна
+        document.body.style.overflow = 'hidden';
+        modal.style.background = 'rgba(0, 0, 0, 0.8)';
+        modal.classList.remove('hide');
+      });
   }
 };
 
