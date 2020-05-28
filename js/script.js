@@ -1,3 +1,4 @@
+const MBD_API = 'bfd0429ad37e2ead2de0b1e98d811db8';
 const IMG_URL = 'https://image.tmdb.org/t/p/w185_and_h278_bestv2';
 
 const leftMenu = document.querySelector('.left-menu');
@@ -157,9 +158,6 @@ tvShowList.onclick = evt => {
         //   genresList.innerHTML += `<li>${item.name}</li>`; 
         // });
 
-        rating = 1;
-        description = 1;
-        modalLink = 1;
       })
       .then(() => {
         // перенесли показ модалки в асинхронное выполнение, для того,
