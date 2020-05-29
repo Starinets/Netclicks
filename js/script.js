@@ -1,4 +1,3 @@
-const MBD_API = 'bfd0429ad37e2ead2de0b1e98d811db8';
 const IMG_URL = 'https://image.tmdb.org/t/p/w185_and_h278_bestv2';
 
 const leftMenu = document.querySelector('.left-menu');
@@ -15,10 +14,18 @@ const rating = document.querySelector('.rating');
 const description = document.querySelector('.description');
 const modalLink = document.querySelector('.modal__link');
 
+const searchForm = document.querySelector('.search__form');
+const searchFormInput = document.querySelector('.search__form-input');
+
 const loading = document.createElement('div');
 loading.className = 'loading';
 
 const DBService = class {
+  constructor() {
+    this.MBD_API = 'bfd0429ad37e2ead2de0b1e98d811db8';
+    this.SERVER = 'https://api.themoviedb.org/3';
+  }
+
   getData = async url => {
     const res = await fetch(url);
     if (res.ok) {
@@ -35,13 +42,29 @@ const DBService = class {
   getTestCard = () => {
     return this.getData('card.json');
   };
+
+  getSearchResalt = query => {
+    return this.getData(
+      `${this.SERVER}/search/tv?api_key=${this.MBD_API}&query=${query}&language=ru-RU`,
+    );
+    //https://api.themoviedb.org/3/movie/550?api_key=9999999999
+    //https://api.themoviedb.org/3/search/movie?api_key={api_key}&query=Jack+Reacher
+  };
+
+  getTVShow = id => {
+    return this.getData(`${this.SERVER}/tv/${id}?api_key=${this.MBD_API}&language=ru-RU`);
+  };
 };
+
+// иестовый запрос
+//console.log(new DBService().getSearchResalt('Няня'));
 
 /* --------------------------- генератор карточек --------------------------- */
 const renderCard = response => {
   response.results.forEach(item => {
     // prettier-ignore
     const {
+      id,
       backdrop_path: backdrop,
       name: title,
       poster_path: poster,
@@ -53,12 +76,13 @@ const renderCard = response => {
     const voteElem = vote ? `<span class="tv-card__vote">${vote}</span>` : '';
 
     const card = document.createElement('li');
+    card.idTV = id;
 
     //card.classList.add('tv-show__item'); // добавит коасс к существующим
     card.className = 'tv-shows__item'; // установит в коасс строку, затерев старые классы
 
     card.innerHTML = `
-      <a href="#" class="tv-card">
+      <a href="#" id="${id}" class="tv-card">
         ${voteElem}
         <img
           class="tv-card__img"
@@ -75,11 +99,17 @@ const renderCard = response => {
   });
 };
 
-{
-  // отображаем loading
-  tvShowList.append(loading);
-  new DBService().getTestData().then(renderCard);
-}
+searchForm.onsubmit = evt => {
+  evt.preventDefault();
+
+  const value = searchFormInput.value.trim();
+  searchFormInput.value = '';
+
+  if (value) {
+    tvShowList.append(loading);
+    new DBService().getSearchResalt(value).then(renderCard);
+  }
+};
 
 /* ------------------------------ открыть меню ------------------------------ */
 hamburger.onclick = () => {
@@ -136,29 +166,41 @@ tvShowList.onclick = evt => {
   const card = target.closest('.tv-card');
 
   if (card) {
-    // prettier-ignore
     new DBService()
-      .getTestCard()
-      .then(response => {
-        tvCardIMG.src = IMG_URL + response.poster_path;
-        modalTitle.textContent = response.name;
-        //собираем в acc элементы списка
-        // в первой итерации в acc попадет первый элемент массива, поэтому третим параметром передаем ''
-        genresList.innerHTML = response.genres.reduce((acc, item) => `${acc}<li>${item.name}</li>`, ''); 
-        
-        //старый способ сборки списка
-        // genresList.textContent = ''; // работает быстрее чем .innerHTML = ''
-        // for (const item of response.genres) {
-        //   genresList.innerHTML += `<li>${item.name}</li>`;  
-        // }
+      .getTVShow(card.id)
+      .then(
+        ({
+          poster_path: posterPath,
+          name: title,
+          genres,
+          vote_average: voteAverage,
+          overview,
+          homepage,
+        }) => {
+          tvCardIMG.src = IMG_URL + posterPath;
+          tvCardIMG.alt = title;
+          modalTitle.textContent = title;
+          //собираем в acc элементы списка
+          // в первой итерации в acc попадет первый элемент массива, поэтому третим параметром передаем ''
+          genresList.innerHTML = genres.reduce((acc, item) => `${acc}<li>${item.name}</li>`, '');
 
-        // и еще один способ через forEach
-        // genresList.textContent = '';
-        // response.genres.forEach(item => {
-        //   genresList.innerHTML += `<li>${item.name}</li>`; 
-        // });
+          rating.textContent = voteAverage;
+          description.textContent = overview;
+          modalLink.href = homepage;
 
-      })
+          //старый способ сборки списка
+          // genresList.textContent = ''; // работает быстрее чем .innerHTML = ''
+          // for (const item of response.genres) {
+          //   genresList.innerHTML += `<li>${item.name}</li>`;
+          // }
+
+          // и еще один способ через forEach
+          // genresList.textContent = '';
+          // response.genres.forEach(item => {
+          //   genresList.innerHTML += `<li>${item.name}</li>`;
+          // });
+        },
+      )
       .then(() => {
         // перенесли показ модалки в асинхронное выполнение, для того,
         // чтобы модальное окно отображалосьб только после получения json от сервера
